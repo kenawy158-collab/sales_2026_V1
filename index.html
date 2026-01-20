@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crispy Chicken | Enterprise BI Ultimate</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #D32F2F; --primary-dark: #b71c1c; --secondary: #FFC107;
+            --bg-body: #f4f6f6; --bg-panel: #ffffff; --text-main: #333333; --text-muted: #666666; --border: #e0e0e0;
+            --chart-blue: #1976D2; --chart-green: #388E3C; --chart-orange: #F57C00; --chart-purple: #7B1FA2; --chart-red: #D32F2F;
+        }
+        * { box-sizing: border-box; font-family: 'Segoe UI', 'Roboto', 'Helvetica', sans-serif; margin:0; padding:0; }
+        body { background-color: var(--bg-body); color: var(--text-main); height:100vh; display:flex; overflow:hidden; }
+        aside { width:260px; background:#1a1a1a; color:white; display:flex; flex-direction:column; border-right:1px solid #333; transition:transform 0.3s; }
+        .brand { padding:20px; display:flex; align-items:center; background:var(--primary); font-weight:800; font-size:1.4rem; letter-spacing:1px; box-shadow:0 2px 5px rgba(0,0,0,0.2); }
+        .brand span { color:var(--secondary); margin-left:5px; }
+        .nav-menu { flex:1; padding:20px 10px; display:flex; flex-direction:column; gap:5px; overflow-y:auto; }
+        .nav-item { padding:12px 15px; cursor:pointer; color:rgba(255,255,255,0.7); display:flex; align-items:center; gap:12px; border-radius:6px; transition:all 0.2s; font-size:0.95rem; }
+        .nav-item:hover { background:rgba(255,255,255,0.1); color:white; }
+        .nav-item.active { background:white; color:var(--text-main); font-weight:bold; border-left:4px solid var(--primary); }
+        main { flex:1; display:flex; flex-direction:column; overflow:hidden; background:var(--bg-body); }
+        .view-container { flex:1; overflow-y:auto; padding:20px; }
+        .top-bar { background:white; padding:15px 25px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+        .page-title { font-size:1.2rem; font-weight:700; color:var(--primary); }
+        .tabs { display:flex; gap:20px; }
+        .tab-link { cursor:pointer; padding-bottom:5px; color:var(--text-muted); font-weight:500; border-bottom:2px solid transparent; transition:0.3s; }
+        .tab-link:hover { color:var(--primary); }
+        .tab-link.active { color:var(--primary); border-bottom-color:var(--primary); }
+        .view { display:none; animation:fadeIn 0.3s ease; }
+        .view.active { display:block; }
+        @keyframes fadeIn { from {opacity:0; transform:translateY(10px);} to {opacity:1; transform:translateY(0);} }
+        .dashboard-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(240px,1fr)); gap:1.5rem; margin-bottom:2rem; }
+        .card { background:var(--bg-panel); padding:1.5rem; border-radius:12px; box-shadow:0 4px 6px rgba(0,0,0,0.02); border:1px solid var(--border); position:relative; overflow:hidden; }
+        .card::after { content:''; position:absolute; top:0; left:0; width:100%; height:4px; }
+        .card.kpi-blue::after { background:var(--chart-blue); }
+        .card.kpi-green::after { background:var(--chart-green); }
+        .card.kpi-orange::after { background:var(--chart-orange); }
+        .card.kpi-purple::after { background:var(--chart-purple); }
+        .card-title { font-size:0.9rem; color:var(--text-muted); font-weight:600; margin-bottom:5px; }
+        .card-value { font-size:1.8rem; font-weight:700; color:var(--text-main); margin-bottom:5px; }
+        .charts-container { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:2rem; }
+        .chart-card { background:var(--bg-panel); padding:1.5rem; border-radius:12px; border:1px solid var(--border); box-shadow:0 4px 6px rgba(0,0,0,0.02); }
+        .chart-header { display:flex; justify-content:space-between; margin-bottom:15px; }
+        .chart-title { font-size:1.1rem; font-weight:700; color:var(--text-main); }
+        .chart-container { position:relative; height:350px; width:100%; }
+        .table-wrapper { background:var(--bg-panel); border-radius:12px; border:1px solid var(--border); overflow:hidden; box-shadow:0 4px 6px rgba(0,0,0,0.02); }
+        .table-header-controls { padding:15px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+        table { width:100%; border-collapse:collapse; }
+        th, td { padding:12px 20px; text-align:left; border-bottom:1px solid #f0f0f0; }
+        th { background:#fafafa; color:var(--text-muted); font-weight:600; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px; }
+        tr:hover { background:#f9f9f9; }
+        .num { font-family:'Consolas',monospace; text-align:right; }
+        .badge { padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:700; text-transform:uppercase; color:white; display:inline-block; }
+        .badge.agg { background-color:var(--chart-green); }
+        .badge.store { background-color:var(--chart-blue); }
+        .badge.online { background-color:var(--chart-purple); }
+        .badge.del { background-color:var(--chart-orange); }
+        .form-grid { background:var(--bg-panel); padding:25px; border-radius:12px; border:1px solid var(--border); max-width:800px; margin:0 auto; }
+        .form-row { display:flex; gap:20px; margin-bottom:15px; }
+        .form-group { flex:1; display:flex; flex-direction:column; gap:5px; }
+        label { font-size:0.85rem; font-weight:600; color:var(--text-muted); }
+        input, select { padding:10px; border:1px solid var(--border); border-radius:6px; font-size:0.95rem; outline:none; transition:0.2s; }
+        input:focus, select:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(211,47,47,0.1); }
+        .btn { padding:10px 20px; border-radius:6px; border:none; cursor:pointer; font-weight:600; transition:0.2s; display:inline-flex; align-items:center; gap:8px; font-size:0.9rem; }
+        .btn-primary { background-color:var(--primary); color:white; }
+        .btn-primary:hover { background-color:var(--primary-dark); }
+        .btn-secondary { background:#f0f0f0; color:var(--text-main); }
+        .btn-secondary:hover { background:#e0e0e0; }
+        .btn-danger { background:#ffebee; color:var(--primary-dark); }
+        .btn-danger:hover { background:#ffcdd2; }
+        .upload-area { border:2px dashed var(--border); padding:30px; text-align:center; border-radius:8px; background:#fafafa; transition:0.2s; margin-bottom:20px; cursor:pointer; }
+        .upload-area:hover { border-color:var(--primary); background:#fff5f5; }
+        .upload-area i { font-size:2rem; color:var(--text-muted); margin-bottom:10px; }
+        .report-paper { background:white; padding:40px; border-radius:8px; box-shadow:0 5px 20px rgba(0,0,0,0.05); max-width:900px; margin:0 auto; }
+        .report-head { text-align:center; border-bottom:2px solid var(--primary); padding-bottom:20px; margin-bottom:20px; }
+        .report-head h1 { color:var(--primary); margin-bottom:5px; }
+        .report-meta { color:var(--text-muted); font-size:0.9rem; }
+        .gm-summary { display:flex; justify-content:space-around; margin-bottom:30px; background:#f9f9f9; padding:20px; border-radius:8px; }
+        .gm-item { text-align:center; }
+        .gm-item h4 { color:var(--text-muted); font-size:0.8rem; text-transform:uppercase; margin-bottom:5px; }
+        .gm-item .val { font-size:1.8rem; font-weight:800; color:var(--text-main); }
+        .gm-table th { background:var(--primary); color:white; }
+        .gm-table td { border-bottom:1px solid #eee; }
+        .gm-table tfoot td { background:#f0f0f0; font-weight:bold; }
+        #toast-container { position:fixed; top:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:10px; pointer-events:none; }
+        .toast { background:#333; color:white; padding:12px 20px; border-radius:6px; box-shadow:0 5px 15px rgba(0,0,0,0.2); display:flex; align-items:center; gap:10px; animation:slideIn 0.3s ease; pointer-events:auto; min-width:250px; }
+        .toast.success { border-left:5px solid var(--chart-green); }
+        .toast.error { border-left:5px solid var(--chart-red); }
+        @keyframes slideIn { from {transform:translateX(100%); opacity:0;} to {transform:translateX(0); opacity:1;} }
+        @media print { aside, .top-bar, .btn, .no-print { display:none !important; } body, main, .view-container { height:auto; overflow:visible; background:white; padding:0; margin:0; } .view { display:none; } #view-gm-report { display:block; } .report-paper { box-shadow:none; margin:0; padding:0; max-width:100%; } .chart-container { height:300px; } }
+        @media (max-width:768px) { aside { position:absolute; height:100%; transform:translateX(-100%); } aside.open { transform:translateX(0); } .charts-container { grid-template-columns:1fr; } .form-row { flex-direction:column; gap:10px; } .top-bar { padding:10px 15px; } }
+    </style>
+</head>
+<body>
+<aside id="sidebar">
+    <div class="brand"><i class="fas fa-drumstick-bite"></i> <span>CRISPY BI</span></div>
+    <div class="nav-menu">
+        <div class="nav-item active" onclick="app.switchTab('dashboard')"><i class="fas fa-chart-pie"></i> Dashboard</div>
+        <div class="nav-item" onclick="app.switchTab('entry')"><i class="fas fa-edit"></i> Data Entry</div>
+        <div class="nav-item" onclick="app.switchTab('report')"><i class="fas fa-table"></i> Detailed Log</div>
+        <div class="nav-item" onclick="app.switchTab('gm-report')"><i class="fas fa-file-invoice-dollar"></i> GM Report</div>
+        <div class="nav-item" onclick="app.switchTab('import')"><i class="fas fa-cog"></i> Settings</div>
+    </div>
+</aside>
+<main>
+    <div class="top-bar">
+        <div style="display:flex; align-items:center; gap:15px;">
+            <button class="btn btn-secondary no-print" onclick="document.getElementById('sidebar').classList.toggle('open')" style="padding:5px 10px;"><i class="fas fa-bars"></i></button>
+            <div class="page-title" id="pageTitle">Executive Overview</div>
+        </div>
+        <div class="tabs no-print">
+            <div class="tab-link active" onclick="app.switchTab('dashboard')">Dashboard</div>
+            <div class="tab-link" onclick="app.switchTab('entry')">Entry</div>
+            <div class="tab-link" onclick="app.switchTab('gm-report')">Reports</div>
+        </div>
+    </div>
+    <div class="view-container">
+        <div id="view-dashboard" class="view active">
+            <div style="background:white; padding:15px; border-radius:8px; margin-bottom:20px; border:1px solid var(--border); display:flex; gap:15px; align-items:center; flex-wrap:wrap;">
+                <div style="display:flex; align-items:center; gap:8px;"><i class="fas fa-filter" style="color:var(--text-muted)"></i>
+                    <select id="dashBranch" onchange="app.refreshDashboard()"><option value="all">All Branches</option></select>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;"><i class="far fa-calendar-alt" style="color:var(--text-muted)"></i>
+                    <select id="dashDate" onchange="app.refreshDashboard()">
+                        <option value="all">All Time</option>
+                        <option value="today">Today</option>
+                        <option value="week">Last 7 Days</option>
+                    </select>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;"><i class="far fa-calendar"></i>
+                    <select id="dashMonth" onchange="app.refreshDashboard()"><option value="all">All Months</option></select>
+                </div>
+                <div style="margin-left:auto; font-size:0.85rem; color:var(--text-muted);"><i class="fas fa-sync-alt" style="margin-right:5px;"></i>Live data</div>
+            </div>
+            <div class="dashboard-grid">
+                <div class="card kpi-blue"><div class="card-title">Total Revenue</div><div class="card-value" id="kpiRevenue">AED 0</div><div style="color:var(--chart-green);font-size:0.8rem;font-weight:600;"><i class="fas fa-arrow-up"></i> Net Sales</div></div>
+                <div class="card kpi-green"><div class="card-title">Transactions</div><div class="card-value" id="kpiTxn">0</div><div style="color:var(--text-muted);font-size:0.8rem;">Total Orders</div></div>
+                <div class="card kpi-orange"><div class="card-title">Avg Ticket Size</div><div class="card-value" id="kpiATS">AED 0</div><div style="color:var(--text-muted);font-size:0.8rem;">Per Transaction</div></div>
+                <div class="card kpi-purple"><div class="card-title">Top Branch</div><div class="card-value" id="kpiTopBranch" style="font-size:1.4rem;">-</div><div style="color:var(--text-muted);font-size:0.8rem;">By Revenue</div></div>
+                <div class="card kpi-blue"><div class="card-title">Total Profit</div><div class="card-value" id="kpiProfit">AED 0</div><div style="color:var(--chart-green);font-size:0.8rem;">Gross Profit</div></div>
+                <div class="card kpi-green"><div class="card-title">Gross Margin %</div><div class="card-value" id="kpiGM">0%</div><div style="color:var(--text-muted);font-size:0.8rem;">Profit Margin</div></div>
+            </div>
+            <div class="charts-container">
+                <div class="chart-card"><div class="chart-header"><div class="chart-title">Revenue by Branch</div></div><div class="chart-container"><canvas id="branchChart"></canvas></div></div>
+                <div class="chart-card"><div class="chart-header"><div class="chart-title">Sales Channel Mix</div></div><div class="chart-container"><canvas id="channelChart"></canvas></div></div>
+                <div class="chart-card"><div class="chart-header"><div class="chart-title">Delivery Trend (Sales Over Time)</div></div><div class="chart-container"><canvas id="deliveryTrendChart"></canvas></div></div>
+            </div>
+        </div>
+
+        <div id="view-entry" class="view">
+            <div class="form-grid">
+                <h3 style="margin-bottom:20px; color:var(--primary);"><i class="fas fa-plus-circle"></i> New Sales Record</h3>
+                <form id="addForm" onsubmit="app.handleAddRecord(event)">
+                    <div class="form-row">
+                        <div class="form-group"><label>Date</label><input type="date" id="inpDate" required max="2026-01-20"></div>
+                        <div class="form-group"><label>Branch</label><select id="inpBranch" required></select></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Tender Type</label><select id="inpTender" required onchange="app.updateChannelPreview()"></select></div>
+                        <div class="form-group"><label>Channel (Auto)</label><input type="text" id="inpChannel" readonly style="background:#eee;font-weight:bold;border:none;"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Sales Amount (AED)</label><input type="number" id="inpSales" min="0" step="0.01" required placeholder="0.00"></div>
+                        <div class="form-group"><label>Transactions (Count)</label><input type="number" id="inpTxn" min="0" required placeholder="0"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Cost Amount (AED)</label><input type="number" id="inpCost" min="0" step="0.01" required placeholder="0.00"></div>
+                    </div>
+                    <div style="margin-top:10px; text-align:right;">
+                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('addForm').reset(); document.getElementById('inpDate').valueAsDate=new Date('2026-01-20');">Clear</button>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Record</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="view-report" class="view">
+            <div class="table-wrapper">
+                <div class="table-header-controls">
+                    <h3>Detailed Log</h3>
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="searchTable" placeholder="Search..." onkeyup="app.renderTable()" style="padding:5px 10px;">
+                        <button class="btn btn-primary btn-sm" onclick="app.exportCSV()"><i class="fas fa-file-csv"></i> Export All</button>
+                        <button class="btn btn-primary btn-sm" onclick="app.exportFilteredCSV()"><i class="fas fa-filter"></i> Export Filtered</button>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table id="dataTable">
+                        <thead><tr><th>Date</th><th>Branch</th><th>Tender Type</th><th>Channel</th><th class="num">Sales (AED)</th><th class="num">Cost (AED)</th><th class="num">Profit (AED)</th><th class="num">Txn</th></tr></thead>
+                        <tbody></tbody>
+                        <tfoot><tr style="background:#f0f0f0; font-weight:bold;"><td colspan="4">Total (filtered)</td><td class="num" id="tableTotalSales">AED 0.00</td><td class="num" id="tableTotalCost">AED 0.00</td><td class="num" id="tableTotalProfit">AED 0.00</td><td class="num" id="tableTotalTxn">0</td></tr></tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-gm-report" class="view">
+            <div class="report-paper">
+                <div class="report-head">
+                    <h1>CRISPY CHICKEN</h1>
+                    <p style="font-size:1.2rem; letter-spacing:2px; margin-bottom:5px;">OPERATIONAL REPORT</p>
+                    <p class="report-meta" id="reportDateStr">Generated on: </p>
+                </div>
+                <div class="gm-summary">
+                    <div class="gm-item"><h4>Total Revenue</h4><div class="val" id="gmRev">AED 0.00</div></div>
+                    <div class="gm-item"><h4>Total Profit</h4><div class="val" id="gmProfit">AED 0.00</div></div>
+                    <div class="gm-item"><h4>Gross Margin %</h4><div class="val" id="gmGM">0%</div></div>
+                    <div class="gm-item"><h4>Total Transactions</h4><div class="val" id="gmTxn">0</div></div>
+                    <div class="gm-item"><h4>Average Ticket</h4><div class="val" id="gmATS">AED 0.00</div></div>
+                </div>
+                <table class="gm-table" style="width:100%; margin-top:20px; border-collapse:collapse;">
+                    <thead><tr><th style="text-align:left; padding:12px;">Branch</th><th class="num">Aggregator</th><th class="num">In-Store</th><th class="num">Delivery</th><th class="num">Online</th><th class="num" style="background:#b71c1c;">Total Sales</th><th class="num">Total Profit</th><th class="num">GM %</th></tr></thead>
+                    <tbody id="gmTableBody"></tbody>
+                    <tfoot><tr><td style="padding:12px; font-weight:bold;">GRAND TOTAL</td><td class="num" id="gmFootAgg">0</td><td class="num" id="gmFootStore">0</td><td class="num" id="gmFootDel">0</td><td class="num" id="gmFootOnline">0</td><td class="num" id="gmFootTotal" style="background:#b71c1c; color:white;">0</td><td class="num" id="gmFootProfit">0</td><td class="num" id="gmFootGM">0%</td></tr></tfoot>
+                </table>
+                <div style="margin-top:40px; text-align:center;" class="no-print">
+                    <button class="btn btn-primary" onclick="window.print()"><i class="fas fa-print"></i> Print Report</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-import" class="view">
+            <div class="form-grid">
+                <h3 style="color:var(--primary); margin-bottom:15px;">System Management</h3>
+                <div style="margin-bottom:30px; padding:20px; border:1px solid #e0e0e0; border-radius:8px;">
+                    <h4 style="margin-top:0; margin-bottom:10px;"><i class="fas fa-file-upload"></i> Import Data</h4>
+                    <div class="upload-area" onclick="document.getElementById('csvFileInput').click()">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p><strong>Click to upload CSV file</strong></p>
+                        <small>Format: Date,Branch,Tender_Type,Sales,Transactions,Cost (Channel auto-detected)</small>
+                    </div>
+                    <input type="file" id="csvFileInput" accept=".csv" style="display:none;" onchange="app.handleFileUpload(this)">
+                    <div style="text-align:center; margin-top:10px;">
+                        <button class="btn btn-secondary btn-sm" onclick="app.downloadTemplate()"><i class="fas fa-download"></i> Download CSV Template</button>
+                    </div>
+                </div>
+                <div style="padding:20px; background:#e3f2fd; border-left:5px solid #2196F3; border-radius:4px; margin-bottom:20px;">
+                    <h4 style="margin-top:0;">Load Demo Data (Jan 1, 2026)</h4>
+                    <p style="font-size:0.9rem; color:#555; margin-bottom:10px;">Populates the system with your provided 93-record dataset.</p>
+                    <button class="btn btn-primary" id="loadDemoBtn" onclick="app.loadSampleData()"><i class="fas fa-database"></i> Load Demo Data</button>
+                </div>
+                <div style="padding:20px; background:#ffebee; border-left:5px solid #D32F2F; border-radius:4px;">
+                    <h4 style="margin-top:0;">Danger Zone</h4>
+                    <p style="font-size:0.9rem; color:#555; margin-bottom:10px;">Permanently delete all records.</p>
+                    <button class="btn btn-danger" onclick="app.clearData()"><i class="fas fa-trash-alt"></i> Delete All Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<div id="toast-container"></div>
+
+<script>
+    const BRANCHES = ["Hamdan St", "Khalidiya", "Mussafah", "Muroor", "Al Electra", "Al Barsha", "Al Satwa", "Al Rigga", "Al Majaz"];
+
+    const CHANNEL_MAP = {
+        "Cash": "In-Store", "Visa Card": "In-Store", "Master card": "In-Store",
+        "Keeta CARD": "Aggregator", "Careem CARD": "Aggregator", "NOON CARD": "Aggregator",
+        "SMILES CARD": "Aggregator", "DELIVEROO CARD": "Aggregator",
+        "ONLINE CASH": "Online", "ONLINE CARD": "Online",
+        "Delivery Cash": "Delivery", "Delivery CARD": "Delivery"
+    };
+
+    let salesData = [];
+    let chartBranch = null;
+    let chartChannel = null;
+    let chartDeliveryTrend = null;
+
+    const app = {
+        init: () => {
+            // Populate branches
+            const branchSelects = [document.getElementById('dashBranch'), document.getElementById('inpBranch')];
+            branchSelects.forEach(sel => {
+                BRANCHES.forEach(b => {
+                    const opt = document.createElement('option');
+                    opt.value = b; opt.textContent = b;
+                    sel.appendChild(opt);
+                });
+            });
+
+            // Populate tenders
+            const tenderSel = document.getElementById('inpTender');
+            Object.keys(CHANNEL_MAP).sort().forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t; opt.textContent = t;
+                tenderSel.appendChild(opt);
+            });
+
+            // Default date = today
+            document.getElementById('inpDate').valueAsDate = new Date('2026-01-20');
+
+            app.loadData();
+            app.updateMonthOptions();
+        },
+
+        updateMonthOptions: () => {
+            const monthSel = document.getElementById('dashMonth');
+            monthSel.innerHTML = '<option value="all">All Months</option>';
+            
+            // Extract unique months from sales data
+            const months = new Set();
+            salesData.forEach(d => {
+                if (d.date) {
+                    const date = new Date(d.date);
+                    const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                    months.add(monthYear);
+                }
+            });
+            
+            // Sort months descending
+            const sortedMonths = Array.from(months).sort().reverse();
+            sortedMonths.forEach(month => {
+                const date = new Date(month + '-01');
+                const monthName = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+                const opt = document.createElement('option');
+                opt.value = month;
+                opt.textContent = monthName;
+                monthSel.appendChild(opt);
+            });
+        },
+
+        switchTab: (viewId) => {
+            document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+            document.getElementById('view-' + viewId).classList.add('active');
+
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-link').forEach(el => el.classList.remove('active'));
+
+            const navIndex = {dashboard:0, entry:1, report:2, 'gm-report':3, import:4}[viewId];
+            if (navIndex !== undefined) document.querySelectorAll('.nav-item')[navIndex].classList.add('active');
+            document.querySelector(`.tab-link[onclick*=" '${viewId}'"]`)?.classList.add('active');
+
+            document.getElementById('pageTitle').textContent = {
+                dashboard: 'Executive Overview',
+                entry: 'Data Entry',
+                report: 'Detailed Transaction Log',
+                'gm-report': 'General Manager Report',
+                import: 'System Settings'
+            }[viewId];
+
+            if (viewId === 'gm-report') app.generateGMReport();
+            if (viewId === 'report') app.renderTable();
+
+            if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
+        },
+
+        loadData: () => {
+            const stored = localStorage.getItem('crispy_bi_data');
+            if (stored) {
+                try {
+                    salesData = JSON.parse(stored) || [];
+                    app.toast(`Loaded ${salesData.length} records from local storage`, "success");
+                } catch (e) {
+                    salesData = [];
+                    app.toast("Error loading data from storage", "error");
+                }
+            }
+            app.refreshDashboard();
+        },
+
+        saveData: () => {
+            try {
+                localStorage.setItem('crispy_bi_data', JSON.stringify(salesData));
+                app.refreshDashboard();
+                app.updateMonthOptions();
+            } catch (e) {
+                app.toast("Error saving data to local storage", "error");
+            }
+        },
+
+        clearData: () => {
+            if (confirm("Delete ALL records permanently? This action cannot be undone.")) {
+                salesData = [];
+                localStorage.removeItem('crispy_bi_data');
+                app.refreshDashboard();
+                app.renderTable();
+                app.toast("All data cleared", "error");
+            }
+        },
+
+        downloadTemplate: () => {
+            const csv = "Date,Branch,Tender_Type,Sales,Transactions,Cost\n2026-01-01,Hamdan St,Cash,5000,200,3000";
+            const blob = new Blob([csv], {type: 'text/csv'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'crispy_template.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        },
+
+        handleFileUpload: (input) => {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    const rows = e.target.result.split(/\r?\n/);
+                    let count = 0, errors = 0;
+                    
+                    for (let i = 1; i < rows.length; i++) {
+                        const row = rows[i].trim();
+                        if (!row) continue;
+                        
+                        const cols = row.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+                        if (cols.length < 6) {
+                            errors++;
+                            continue;
+                        }
+
+                        const [dateStr, branch, tender, salesStr, txnStr, costStr] = cols;
+                        const date = app.formatDateToISO(dateStr);
+                        const sales = parseFloat(salesStr.replace(/,/g,'')) || 0;
+                        const txn = parseInt(txnStr) || 0;
+                        const cost = parseFloat(costStr.replace(/,/g,'')) || 0;
+
+                        if (!date || !BRANCHES.includes(branch) || sales <= 0) {
+                            errors++;
+                            continue;
+                        }
+
+                        const channel = app.getChannelFromTender(tender);
+                        const id = Date.now() + Math.random();
+                        salesData.push({id, date, branch, tender, channel, sales, txn, cost});
+                        count++;
+                    }
+                    
+                    app.saveData();
+                    app.renderTable();
+                    const msg = `Imported ${count} records${errors > 0 ? ` (${errors} skipped)` : ''}`;
+                    app.toast(msg, count > 0 ? "success" : "error");
+                    
+                } catch (error) {
+                    app.toast("Error processing CSV file", "error");
+                }
+                input.value = '';
+            };
+            
+            reader.onerror = () => {
+                app.toast("Error reading file", "error");
+                input.value = '';
+            };
+            
+            reader.readAsText(file);
+        },
+
+        formatDateToISO: (str) => {
+            if (!str) return '';
+            
+            // Handle various date formats
+            const parts = str.split(/[-/]/);
+            if (parts.length !== 3) return '';
+            
+            let y, m, d;
+            
+            // Check if year is first (YYYY-MM-DD)
+            if (parts[0].length === 4) {
+                [y, m, d] = parts;
+            } 
+            // Handle MM/DD/YYYY or DD/MM/YYYY
+            else {
+                // Try to determine format by checking if first part > 12 (likely DD)
+                if (parseInt(parts[0]) > 12 && parseInt(parts[1]) <= 12) {
+                    // DD/MM/YYYY
+                    [d, m, y] = parts;
+                } else {
+                    // Assume MM/DD/YYYY
+                    [m, d, y] = parts;
+                }
+            }
+            
+            // Ensure 4-digit year
+            y = parseInt(y);
+            if (y < 100) {
+                y += 2000; // Handle 2-digit years
+            }
+            
+            return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        },
+
+        loadSampleData: () => {
+            const btn = document.getElementById('loadDemoBtn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+
+            // Clear existing data first
+            salesData = [];
+            
+            const raw = `1/1/2026,Hamdan St,Keeta CARD,10546.45,248,5273
+1/1/2026,Hamdan St,Cash,4680,208,2340
+1/1/2026,Hamdan St,Master card,3367.9,119,1684
+1/1/2026,Hamdan St,NOON CARD,3195,90,1597.5
+1/1/2026,Hamdan St,Visa Card,3039,98,1519.5
+1/1/2026,Hamdan St,Delivery CARD,1175,22,587.5
+1/1/2026,Hamdan St,Delivery Cash,1012,24,506
+1/1/2026,Hamdan St,ONLINE CASH,450,9,225
+1/1/2026,Hamdan St,Careem CARD,430,10,215
+1/1/2026,Hamdan St,SMILES CARD,429,10,214.5
+1/1/2026,Hamdan St,ONLINE CARD,389,3,194.5
+1/1/2026,Hamdan St,DELIVEROO CARD,25,1,12.5
+1/1/2026,Khalidiya,Keeta CARD,11208.5,256,5604.25
+1/1/2026,Khalidiya,NOON CARD,3063,87,1531.5
+1/1/2026,Khalidiya,Cash,3055,155,1527.5
+1/1/2026,Khalidiya,Master card,2140,97,1070
+1/1/2026,Khalidiya,Visa Card,1659,53,829.5
+1/1/2026,Khalidiya,Delivery Cash,442,11,221
+1/1/2026,Khalidiya,Delivery CARD,346,8,173
+1/1/2026,Khalidiya,Careem CARD,318,6,159
+1/1/2026,Khalidiya,DELIVEROO CARD,293,6,146.5
+1/1/2026,Khalidiya,SMILES CARD,291,6,145.5
+1/1/2026,Khalidiya,ONLINE CASH,156.9,3,78.45
+1/1/2026,Khalidiya,ONLINE CARD,125,1,62.5
+1/1/2026,Mussafah,Keeta CARD,10843,264,5421.5
+1/1/2026,Mussafah,NOON CARD,5604,144,2802
+1/1/2026,Mussafah,Cash,4680,201,2340
+1/1/2026,Mussafah,Master card,2315,91,1157.5
+1/1/2026,Mussafah,Visa Card,1434,56,717
+1/1/2026,Mussafah,SMILES CARD,1090,19,545
+1/1/2026,Mussafah,Delivery CARD,1081,15,540.5
+1/1/2026,Mussafah,Careem CARD,808,19,404
+1/1/2026,Mussafah,Delivery Cash,534,12,267
+1/1/2026,Mussafah,ONLINE CASH,318,6,159
+1/1/2026,Mussafah,DELIVEROO CARD,269,4,134.5
+1/1/2026,Mussafah,ONLINE CARD,34,1,17
+1/1/2026,Muroor,Keeta CARD,8520,192,4260
+1/1/2026,Muroor,NOON CARD,3083,77,1541.5
+1/1/2026,Muroor,Visa Card,2416,63,1208
+1/1/2026,Muroor,Cash,2239,117,1119.5
+1/1/2026,Muroor,Master card,2014,61,1007
+1/1/2026,Muroor,Delivery CARD,721,16,360.5
+1/1/2026,Muroor,Careem CARD,276,7,138
+1/1/2026,Muroor,SMILES CARD,145,2,72.5
+1/1/2026,Muroor,Delivery Cash,126,4,63
+1/1/2026,Muroor,ONLINE CARD,95,1,47.5
+1/1/2026,Muroor,ONLINE CASH,68,1,34
+1/1/2026,Al Electra,Keeta CARD,13085,316,6542.5
+1/1/2026,Al Electra,Cash,11159,499,5579.5
+1/1/2026,Al Electra,Master card,5436,174,2718
+1/1/2026,Al Electra,NOON CARD,3358,101,1679
+1/1/2026,Al Electra,Visa Card,2624,89,1312
+1/1/2026,Al Electra,SMILES CARD,661,14,330.5
+1/1/2026,Al Electra,Careem CARD,494,13,247
+1/1/2026,Al Barsha,Keeta CARD,10887,254,5443.5
+1/1/2026,Al Barsha,Cash,5752,293,2876
+1/1/2026,Al Barsha,NOON CARD,4958,136,2479
+1/1/2026,Al Barsha,Visa Card,2468,117,1234
+1/1/2026,Al Barsha,Master card,2328,111,1164
+1/1/2026,Al Barsha,Careem CARD,769,19,384.5
+1/1/2026,Al Barsha,Delivery Cash,315,6,157.5
+1/1/2026,Al Barsha,ONLINE CASH,237,4,118.5
+1/1/2026,Al Barsha,SMILES CARD,220,4,110
+1/1/2026,Al Barsha,Delivery CARD,178,5,89
+1/1/2026,Al Barsha,DELIVEROO CARD,82,2,41
+1/1/2026,Al Barsha,ONLINE CARD,58,1,29
+1/1/2026,Al Satwa,Keeta CARD,8571,198,4285.5
+1/1/2026,Al Satwa,Cash,4630,176,2315
+1/1/2026,Al Satwa,NOON CARD,3493,97,1746.5
+1/1/2026,Al Satwa,Visa Card,1899,71,949.5
+1/1/2026,Al Satwa,Master card,1150,45,575
+1/1/2026,Al Satwa,Careem CARD,661,12,330.5
+1/1/2026,Al Satwa,ONLINE CASH,267,4,133.5
+1/1/2026,Al Satwa,DELIVEROO CARD,264,2,132
+1/1/2026,Al Satwa,Delivery Cash,202,4,101
+1/1/2026,Al Satwa,SMILES CARD,75,3,37.5
+1/1/2026,Al Satwa,Delivery CARD,64,2,32
+1/1/2026,Al Satwa,ONLINE CARD,38,1,19
+1/1/2026,Al Rigga,Keeta CARD,17201,427,8600.5
+1/1/2026,Al Rigga,Cash,6132,309,3066
+1/1/2026,Al Rigga,NOON CARD,4195,121,2097.5
+1/1/2026,Al Rigga,Visa Card,2630,103,1315
+1/1/2026,Al Rigga,Master card,1588,71,794
+1/1/2026,Al Rigga,SMILES CARD,318,7,159
+1/1/2026,Al Rigga,Careem CARD,52,3,26
+1/1/2026,Al Majaz,Keeta CARD,9625,232,4812.5
+1/1/2026,Al Majaz,NOON CARD,3400,61,1700
+1/1/2026,Al Majaz,Cash,2833,125,1416.5
+1/1/2026,Al Majaz,Visa Card,1963,58,981.5
+1/1/2026,Al Majaz,Master card,1348,39,674
+1/1/2026,Al Majaz,Delivery CARD,739,8,369.5
+1/1/2026,Al Majaz,Delivery Cash,364,4,182
+1/1/2026,Al Majaz,SMILES CARD,106,3,53`;
+
+            const lines = raw.split('\n');
+            let count = 0;
+            
+            lines.forEach(line => {
+                const cols = line.split(',').map(c => c.trim());
+                if (cols.length < 6) return;
+                
+                const [dateStr, branch, tender, salesStr, txnStr, costStr] = cols;
+                const date = app.formatDateToISO(dateStr);
+                const sales = parseFloat(salesStr) || 0;
+                const txn = parseInt(txnStr) || 0;
+                const cost = parseFloat(costStr) || 0;
+                
+                if (!date || !BRANCHES.includes(branch)) return;
+
+                const channel = app.getChannelFromTender(tender);
+                const id = Date.now() + Math.random();
+                salesData.push({id, date, branch, tender, channel, sales, txn, cost});
+                count++;
+            });
+
+            setTimeout(() => {
+                app.saveData();
+                app.toast(`Loaded ${count} demo records successfully`, "success");
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }, 1000);
+        },
+
+        getChannelFromTender: (tender) => CHANNEL_MAP[tender] || "Other",
+
+        getFilteredData: () => {
+            const branch = document.getElementById('dashBranch').value;
+            const scope = document.getElementById('dashDate').value;
+            const month = document.getElementById('dashMonth').value;
+            const today = '2026-01-20';
+
+            return salesData.filter(d => {
+                if (branch !== 'all' && d.branch !== branch) return false;
+                
+                if (scope === 'today' && d.date !== today) return false;
+                
+                if (scope === 'week') {
+                    const diff = (new Date(today) - new Date(d.date)) / (1000*60*60*24);
+                    if (diff < 0 || diff > 7) return false;
+                }
+                
+                if (month !== 'all' && !d.date.startsWith(month)) return false;
+                
+                return true;
+            });
+        },
+
+        refreshDashboard: () => {
+            const data = app.getFilteredData();
+            let totalRev = 0, totalTxn = 0, totalCost = 0, totalProfit = 0;
+            const branchTotals = {};
+
+            data.forEach(d => {
+                totalRev += d.sales;
+                totalTxn += d.txn;
+                totalCost += d.cost || 0;
+                totalProfit += (d.sales - (d.cost || 0));
+                branchTotals[d.branch] = (branchTotals[d.branch] || 0) + d.sales;
+            });
+
+            let topBranch = "-", topVal = 0;
+            for (const [b, v] of Object.entries(branchTotals)) {
+                if (v > topVal) { topVal = v; topBranch = b; }
+            }
+
+            const gmPercent = totalRev > 0 ? ((totalProfit / totalRev) * 100).toFixed(2) : 0;
+
+            document.getElementById('kpiRevenue').textContent = `AED ${totalRev.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+            document.getElementById('kpiTxn').textContent = totalTxn.toLocaleString();
+            document.getElementById('kpiATS').textContent = `AED ${totalTxn > 0 ? (totalRev/totalTxn).toFixed(2) : "0.00"}`;
+            document.getElementById('kpiTopBranch').textContent = topBranch;
+            document.getElementById('kpiProfit').textContent = `AED ${totalProfit.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+            document.getElementById('kpiGM').textContent = `${gmPercent}%`;
+
+            app.renderCharts(data, branchTotals);
+        },
+
+        renderCharts: (data, branchTotals) => {
+            const sortedBranches = Object.entries(branchTotals).sort((a,b)=>b[1]-a[1]);
+
+            const channelMap = {Aggregator:0, "In-Store":0, Delivery:0, Online:0};
+            data.forEach(d => { if (d.channel in channelMap) channelMap[d.channel] += d.sales; });
+
+            // Destroy existing charts to prevent memory leaks
+            if (chartBranch) {
+                chartBranch.destroy();
+                chartBranch = null;
+            }
+            if (chartChannel) {
+                chartChannel.destroy();
+                chartChannel = null;
+            }
+            if (chartDeliveryTrend) {
+                chartDeliveryTrend.destroy();
+                chartDeliveryTrend = null;
+            }
+
+            // Branch Chart
+            if (sortedBranches.length > 0) {
+                chartBranch = new Chart(document.getElementById('branchChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: sortedBranches.map(([b]) => b),
+                        datasets: [{ 
+                            label: 'Sales (AED)', 
+                            data: sortedBranches.map(([,v])=>v), 
+                            backgroundColor: '#D32F2F', 
+                            borderRadius:4, 
+                            barPercentage:0.6 
+                        }]
+                    },
+                    options: { 
+                        responsive:true, 
+                        maintainAspectRatio:false, 
+                        plugins:{legend:{display:false}}, 
+                        scales:{
+                            y:{
+                                beginAtZero:true, 
+                                grid:{color:'#f0f0f0'},
+                                ticks: {
+                                    callback: function(value) {
+                                        return 'AED ' + value.toLocaleString();
+                                    }
+                                }
+                            }, 
+                            x:{grid:{display:false}}
+                        }
+                    }
+                });
+            } else {
+                document.getElementById('branchChart').innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#999;">No data available</div>';
+            }
+
+            // Channel Chart
+            if (Object.values(channelMap).some(v => v > 0)) {
+                chartChannel = new Chart(document.getElementById('channelChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(channelMap),
+                        datasets: [{ 
+                            data: Object.values(channelMap), 
+                            backgroundColor: ['#388E3C','#1976D2','#F57C00','#7B1FA2'], 
+                            borderWidth:0 
+                        }]
+                    },
+                    options: { 
+                        responsive:true, 
+                        maintainAspectRatio:false, 
+                        plugins:{legend:{position:'bottom'}} 
+                    }
+                });
+            } else {
+                document.getElementById('channelChart').innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#999;">No data available</div>';
+            }
+
+            // Delivery Trend Chart
+            const deliveryData = data.filter(d => d.channel === 'Delivery');
+            const dates = [...new Set(deliveryData.map(d => d.date))].sort();
+            const salesByDate = dates.map(date => deliveryData.filter(d => d.date === date).reduce((sum, d) => sum + d.sales, 0));
+
+            if (dates.length > 0 && salesByDate.some(v => v > 0)) {
+                chartDeliveryTrend = new Chart(document.getElementById('deliveryTrendChart'), {
+                    type: 'line',
+                    data: {
+                        labels: dates.map(d => new Date(d).toLocaleDateString()),
+                        datasets: [{ 
+                            label: 'Delivery Sales (AED)', 
+                            data: salesByDate, 
+                            borderColor: '#F57C00',
+                            backgroundColor: 'rgba(245, 124, 0, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: { 
+                        responsive:true, 
+                        maintainAspectRatio:false, 
+                        scales:{
+                            y:{
+                                beginAtZero:true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return 'AED ' + value.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                document.getElementById('deliveryTrendChart').innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#999;">No delivery data available</div>';
+            }
+        },
+
+        updateChannelPreview: () => {
+            const tender = document.getElementById('inpTender').value;
+            document.getElementById('inpChannel').value = app.getChannelFromTender(tender);
+        },
+
+        handleAddRecord: (e) => {
+            e.preventDefault();
+            const date = document.getElementById('inpDate').value;
+            const branch = document.getElementById('inpBranch').value;
+            const tender = document.getElementById('inpTender').value;
+            const channel = app.getChannelFromTender(tender);
+            const sales = parseFloat(document.getElementById('inpSales').value) || 0;
+            const txn = parseInt(document.getElementById('inpTxn').value) || 0;
+            const cost = parseFloat(document.getElementById('inpCost').value) || 0;
+
+            if (!date || !branch || sales <= 0) {
+                app.toast("Please fill all required fields correctly", "error");
+                return;
+            }
+
+            if (cost > sales) {
+                if (!confirm("Cost exceeds sales amount. Continue anyway?")) return;
+            }
+
+            const exists = salesData.some(r => r.date === date && r.branch === branch && r.tender === tender);
+            if (exists && !confirm("A record with this date, branch & tender already exists. Add anyway?")) return;
+
+            const newRecord = {
+                id: Date.now(),
+                date,
+                branch,
+                tender,
+                channel,
+                sales,
+                txn,
+                cost
+            };
+
+            salesData.push(newRecord);
+            app.saveData();
+            
+            // Reset form but keep date
+            document.getElementById('addForm').reset();
+            document.getElementById('inpDate').valueAsDate = new Date('2026-01-20');
+            
+            app.toast("Record saved successfully", "success");
+            app.switchTab('report');
+        },
+
+        renderTable: () => {
+            const tbody = document.querySelector('#dataTable tbody');
+            tbody.innerHTML = '';
+            const term = document.getElementById('searchTable').value.toLowerCase();
+
+            const filtered = salesData
+                .filter(d => 
+                    d.date.includes(term) || 
+                    d.branch.toLowerCase().includes(term) || 
+                    d.tender.toLowerCase().includes(term) || 
+                    d.channel.toLowerCase().includes(term)
+                )
+                .sort((a,b) => new Date(b.date) - new Date(a.date));
+
+            let sumSales = 0, sumTxn = 0, sumCost = 0, sumProfit = 0;
+            
+            filtered.forEach(d => {
+                const profit = d.sales - (d.cost || 0);
+                sumSales += d.sales;
+                sumTxn += d.txn;
+                sumCost += d.cost || 0;
+                sumProfit += profit;
+                
+                const tr = document.createElement('tr');
+                let badgeClass = {Aggregator:'agg', "In-Store":'store', Delivery:'del', Online:'online'}[d.channel] || '';
+                tr.innerHTML = `
+                    <td>${d.date}</td>
+                    <td style="font-weight:600;">${d.branch}</td>
+                    <td>${d.tender}</td>
+                    <td><span class="badge ${badgeClass}">${d.channel}</span></td>
+                    <td class="num">AED ${d.sales.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+                    <td class="num">AED ${(d.cost || 0).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+                    <td class="num">AED ${profit.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+                    <td class="num">${d.txn}</td>`;
+                tbody.appendChild(tr);
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#999;">No records found</td></tr>';
+            }
+
+            document.getElementById('tableTotalSales').textContent = `AED ${sumSales.toLocaleString('en-US', {minimumFractionDigits:2})}`;
+            document.getElementById('tableTotalCost').textContent = `AED ${sumCost.toLocaleString('en-US', {minimumFractionDigits:2})}`;
+            document.getElementById('tableTotalProfit').textContent = `AED ${sumProfit.toLocaleString('en-US', {minimumFractionDigits:2})}`;
+            document.getElementById('tableTotalTxn').textContent = sumTxn.toLocaleString();
+        },
+
+        generateGMReport: () => {
+            document.getElementById('reportDateStr').textContent = "Generated: " + new Date().toLocaleString();
+
+            const useFiltered = confirm("Use current dashboard filters for this report?\n(Click Cancel to use ALL data)");
+            const data = useFiltered ? app.getFilteredData() : salesData;
+
+            let totalRev = 0, totalTxn = 0, totalCost = 0, totalProfit = 0;
+            const reportData = {};
+
+            data.forEach(d => {
+                totalRev += d.sales;
+                totalTxn += d.txn;
+                totalCost += d.cost || 0;
+                totalProfit += (d.sales - (d.cost || 0));
+                
+                if (!reportData[d.branch]) {
+                    reportData[d.branch] = {
+                        Aggregator: {sales:0, cost:0}, 
+                        "In-Store": {sales:0, cost:0}, 
+                        Delivery: {sales:0, cost:0}, 
+                        Online: {sales:0, cost:0}, 
+                        Total: {sales:0, cost:0}
+                    };
+                }
+                
+                if (d.channel in reportData[d.branch]) {
+                    reportData[d.branch][d.channel].sales += d.sales;
+                    reportData[d.branch][d.channel].cost += d.cost || 0;
+                    reportData[d.branch].Total.sales += d.sales;
+                    reportData[d.branch].Total.cost += d.cost || 0;
+                }
+            });
+
+            const gmPercent = totalRev > 0 ? ((totalProfit / totalRev) * 100).toFixed(2) : 0;
+
+            document.getElementById('gmRev').textContent = `AED ${totalRev.toLocaleString('en-US', {minimumFractionDigits:2})}`;
+            document.getElementById('gmProfit').textContent = `AED ${totalProfit.toLocaleString('en-US', {minimumFractionDigits:2})}`;
+            document.getElementById('gmGM').textContent = `${gmPercent}%`;
+            document.getElementById('gmTxn').textContent = totalTxn.toLocaleString();
+            document.getElementById('gmATS').textContent = `AED ${totalTxn > 0 ? (totalRev/totalTxn).toFixed(2) : "0.00"}`;
+
+            const tbody = document.getElementById('gmTableBody');
+            tbody.innerHTML = '';
+            let grandAgg=0, grandStore=0, grandDel=0, grandOn=0, grandTotal=0, grandProfit=0;
+
+            BRANCHES.forEach(branch => {
+                const r = reportData[branch] || {
+                    Aggregator:{sales:0}, 
+                    "In-Store":{sales:0}, 
+                    Delivery:{sales:0}, 
+                    Online:{sales:0}, 
+                    Total:{sales:0, cost:0}
+                };
+                const branchProfit = r.Total.sales - r.Total.cost;
+                const branchGM = r.Total.sales > 0 ? ((branchProfit / r.Total.sales) * 100).toFixed(2) : 0;
+                
+                if (r.Total.sales > 0) {
+                    grandAgg += r.Aggregator.sales; 
+                    grandStore += r["In-Store"].sales; 
+                    grandDel += r.Delivery.sales; 
+                    grandOn += r.Online.sales;
+                    grandTotal += r.Total.sales; 
+                    grandProfit += branchProfit;
+                    
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="padding:12px;">${branch}</td>
+                        <td class="num">${r.Aggregator.sales.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+                        <td class="num">${r["In-Store"].sales.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+                        <td class="num">${r.Delivery.sales.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+                        <td class="num">${r.Online.sales.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+                        <td class="num" style="font-weight:bold;background:#f9f9f9;">${r.Total.sales.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+                        <td class="num">${branchProfit.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+                        <td class="num">${branchGM}%</td>`;
+                    tbody.appendChild(tr);
+                }
+            });
+
+            document.getElementById('gmFootAgg').textContent = grandAgg.toLocaleString('en-US', {minimumFractionDigits:2});
+            document.getElementById('gmFootStore').textContent = grandStore.toLocaleString('en-US', {minimumFractionDigits:2});
+            document.getElementById('gmFootDel').textContent = grandDel.toLocaleString('en-US', {minimumFractionDigits:2});
+            document.getElementById('gmFootOnline').textContent = grandOn.toLocaleString('en-US', {minimumFractionDigits:2});
+            document.getElementById('gmFootTotal').textContent = grandTotal.toLocaleString('en-US', {minimumFractionDigits:2});
+            document.getElementById('gmFootProfit').textContent = grandProfit.toLocaleString('en-US', {minimumFractionDigits:2});
+            document.getElementById('gmFootGM').textContent = grandTotal > 0 ? ((grandProfit / grandTotal) * 100).toFixed(2) + '%' : '0%';
+        },
+
+        exportCSV: (dataToExport = salesData) => {
+            if (dataToExport.length === 0) {
+                app.toast("No data to export", "error");
+                return;
+            }
+            
+            const headers = "Date,Branch,Tender,Channel,Sales,Transactions,Cost,Profit\n";
+            const rows = dataToExport.map(d => {
+                const profit = d.sales - (d.cost || 0);
+                return `${d.date},${d.branch},${d.tender},${d.channel},${d.sales},${d.txn},${d.cost || 0},${profit}`;
+            }).join('\n');
+            
+            const csv = "data:text/csv;charset=utf-8," + headers + rows;
+            const uri = encodeURI(csv);
+            const link = document.createElement("a");
+            link.setAttribute("href", uri);
+            link.setAttribute("download", "crispy_sales_" + (dataToExport === salesData ? "all" : "filtered") + ".csv");
+            document.body.appendChild(link); 
+            link.click(); 
+            document.body.removeChild(link);
+        },
+
+        exportFilteredCSV: () => {
+            const filteredData = app.getFilteredData();
+            if (filteredData.length === 0) {
+                app.toast("No filtered data to export", "error");
+                return;
+            }
+            app.exportCSV(filteredData);
+        },
+
+        toast: (msg, type = 'info') => {
+            const c = document.getElementById('toast-container');
+            const t = document.createElement('div');
+            t.className = `toast ${type}`;
+            t.innerHTML = `<i class="fas ${type==='success'?'fa-check-circle':(type==='error'?'fa-exclamation-circle':'fa-info-circle')}"></i> ${msg}`;
+            c.appendChild(t);
+            
+            // Remove any existing toasts after a while
+            const toasts = c.querySelectorAll('.toast');
+            if (toasts.length > 3) {
+                toasts[0].remove();
+            }
+            
+            setTimeout(() => { 
+                t.style.opacity='0'; 
+                t.style.transition='opacity 0.3s';
+                setTimeout(()=>t.remove(),300); 
+            }, 3000);
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', app.init);
+</script>
+</body>
+</html>
